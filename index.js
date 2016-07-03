@@ -7,24 +7,30 @@ module.exports = postcss.plugin('sass-colors', function (opts) {
     css.walkDecls( function ( decl ) {
 
       // Regex for searching the color values.
-      var regEx = /((^|)color)+\((.*?)+(\))/;
-      var index = decl.value.search( regEx );
+      var regEx = /color\(([^)]+)\)\s*\)/g;
+      var index = decl.value.match( regEx );
 
-      if ( !decl.value || index === -1 ) {
+      if ( ! decl.value || index == null ) {
         return;
       }
 
-      // Calls the plugin logic and returns the new color
-      decl.value = colorInit( decl.value );
+      // Iterated all the matches and calls the plugin logic
+      for ( const current of index ) {
+        var newColor = colorInit( current );
+        decl.value = decl.value.replace( current, newColor );
+      }
+
+      decl.value = decl.value;
     });
   };
 
-  function colorInit( declValue ) {
+  // Gets the type of conversion is needed for the current string
+  function colorInit( oldValue ) {
     var color, percentage, colorArgs, colorValue, cssString;
     var balanced = require( 'balanced-match' );
 
     //
-    cssString  = balanced( '(', ')', declValue );
+    cssString  = balanced( '(', ')', oldValue );
     colorArgs  = balanced( '(', ')', cssString.body );
     colorValue = balanced( '(', ')', colorArgs.body );
 
@@ -53,8 +59,8 @@ module.exports = postcss.plugin('sass-colors', function (opts) {
     return colorConvert( percentage, colorArgs.pre, color );
   }
 
+  // Calls the Color.js library for the conversion
   function colorConvert( percentage, option, colorValue ) {
-    // Calls the Color.js library for the conversion
     var Color    = require( 'color' );
     var newColor = Color( colorValue.trim() );
 
