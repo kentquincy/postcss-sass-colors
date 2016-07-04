@@ -42,8 +42,13 @@ module.exports = postcss.plugin('sass-colors', function (opts) {
     } else {
       // The value is an hexadecimal sting or html color
       var hexColor = colorArgs.body.split( ',' );
-      color        = hexColor[0].trim();
-      percentage   = hexColor[1].trim();
+      color = hexColor[0].trim();
+
+      if (  undefined == hexColor[1] ) {
+        percentage = '';
+      } else {
+        percentage = hexColor[1].trim();
+      }
     }
 
     // Cleans the variable
