@@ -1,7 +1,8 @@
-## [0.0.3] - 2016-07-03
+## [0.0.5] - 2016-07-13
 ### Changed
 - Changed how the color varaibles ara iterated.
 - Now replace the correct color string, in place of erasing all the others values.
+- Added basic Unit Tests
 
 ## [0.0.2] - 2016-03-08
 ### Added
