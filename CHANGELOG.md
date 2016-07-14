@@ -1,3 +1,7 @@
+## [0.1.1] - 2016-07-13
+### Changed
+- Removed the ES6 function for compatibility with node 4,5.
+
 ## [0.1.0] - 2016-07-13
 ### Changed
 - Changed how the color varaibles ara iterated.
