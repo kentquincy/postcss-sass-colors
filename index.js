@@ -79,11 +79,26 @@ module.exports = postcss.plugin('sass-colors', function (opts) {
             if ( !decl.value || index === null ) {
                 return;
             }
-
+            var _iterator, _isArray, _i, Symbol;
             // Iterated all the matches and calls the plugin logic
-            for ( const current of index ) {
-                var newColor = colorInit( current );
-                decl.value = decl.value.replace( current, newColor );
+            for (_iterator = index, _isArray = Array.isArray(_iterator),
+                _i = 0, _iterator = _isArray ? _iterator :
+                _iterator[Symbol.iterator](); ;) {
+                var _ref;
+
+                if (_isArray) {
+                    if (_i >= _iterator.length) break;
+                    _ref = _iterator[_i++];
+                } else {
+                    _i = _iterator.next();
+                    if (_i.done) break;
+                    _ref = _i.value;
+                }
+
+                var current = _ref;
+
+                var newColor = colorInit(current);
+                decl.value = decl.value.replace(current, newColor);
             }
 
             decl.value = decl.value;
