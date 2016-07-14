@@ -1,80 +1,92 @@
 var postcss = require('postcss');
 
 module.exports = postcss.plugin('sass-colors', function (opts) {
-  opts = opts || {};
+    opts = opts || {};
 
-  return function ( css ) {
-    css.walkDecls( function ( decl ) {
-
-      // Regex for searching the color values.
-      var regEx = /((^|)color)+\((.*?)+(\))/;
-      var index = decl.value.search( regEx );
-
-      if ( !decl.value || index === -1 ) {
-        return;
-      }
-
-      // Calls the plugin logic and returns the new color
-      decl.value = colorInit( decl.value );
-    });
-  };
-
-  function colorInit( declValue ) {
-    var color, percentage, colorArgs, colorValue, cssString;
-    var balanced = require( 'balanced-match' );
-
-    //
-    cssString  = balanced( '(', ')', declValue );
-    colorArgs  = balanced( '(', ')', cssString.body );
-    colorValue = balanced( '(', ')', colorArgs.body );
-
-    // If colorValue is undefined, the value is an rbg or similar color.
-    if ( undefined !== colorValue ) {
-      color      =  colorValue.pre + '( ' + colorValue.body + ' )';
-      percentage = colorValue.post;
-
-    } else {
-      // The value is an hexadecimal sting or html color
-      var hexColor = colorArgs.body.split( ',' );
-      color        = hexColor[0].trim();
-      percentage   = hexColor[1].trim();
-    }
-
-    // Cleans the variable
-    if ( percentage ) {
-      percentage = percentage.replace( ',', '' ).trim();
-      percentage = percentage.replace( '%', '' ) / 100;
-
-    } else {
-      // Check if the percentage is undefine or empty and set it to 0
-      percentage = '0';
-    }
-
-    return colorConvert( percentage, colorArgs.pre, color );
-  }
-
-  function colorConvert( percentage, option, colorValue ) {
     // Calls the Color.js library for the conversion
-    var Color    = require( 'color' );
-    var newColor = Color( colorValue.trim() );
+    function colorConvert( percentage, option, colorValue ) {
+        var color    = require( 'color' );
+        var newColor = color( colorValue.trim() );
+        var newValue = '';
 
-    switch ( option.trim() ) {
-      case 'darken':
-        newValue = newColor.darken( percentage ).hexString();
-        break;
+        switch ( option.trim() ) {
+        case 'darken':
+            newValue = newColor.darken( percentage ).hexString();
+            break;
 
-      case 'lighten':
-        newValue = newColor.lighten( percentage ).hexString();
-        break;
+        case 'lighten':
+            newValue = newColor.lighten( percentage ).hexString();
+            break;
 
-      case 'rgb':
-        newValue = newColor.clearer( percentage ).rgbString();
-        break;
+        case 'rgb':
+            newValue = newColor.clearer( percentage ).rgbString();
+            break;
 
-      default:
-        return '';
+        default:
+            return '';
+        }
+
+        return newValue;
     }
 
-    return newValue;
-  }
+    // Gets the type of conversion is needed for the current string
+    function colorInit( oldValue ) {
+        var color, percentage, colorArgs, colorValue, cssString;
+        var balanced = require( 'balanced-match' );
+
+        //
+        cssString  = balanced( '(', ')', oldValue );
+        colorArgs  = balanced( '(', ')', cssString.body );
+        colorValue = balanced( '(', ')', colorArgs.body );
+
+        // If colorValue is undefined, the value is an rbg or similar color.
+        if ( undefined !== colorValue ) {
+            color      =  colorValue.pre + '( ' + colorValue.body + ' )';
+            percentage = colorValue.post;
+
+        } else {
+            // The value is an hexadecimal sting or html color
+            var hexColor = colorArgs.body.split( ',' );
+            color = hexColor[0].trim();
+
+            if (  undefined === hexColor[1] ) {
+                percentage = '';
+            } else {
+                percentage = hexColor[1].trim();
+            }
+        }
+
+        // Cleans the variable
+        if ( percentage ) {
+            percentage = percentage.replace( ',', '' ).trim();
+            percentage = percentage.replace( '%', '' ) / 100;
+
+        } else {
+            // Check if the percentage is undefine or empty and set it to 0
+            percentage = '0';
+        }
+
+        return colorConvert( percentage, colorArgs.pre, color );
+    }
+
+    return function ( css ) {
+        css.walkDecls( function ( decl ) {
+
+            // Regex for searching the color values.
+            var regEx = /color\(([^)]+)\)\s*\)/g;
+            var index = decl.value.match( regEx );
+
+            if ( !decl.value || index === null ) {
+                return;
+            }
+
+            // Iterated all the matches and calls the plugin logic
+            for ( const current of index ) {
+                var newColor = colorInit( current );
+                decl.value = decl.value.replace( current, newColor );
+            }
+
+            decl.value = decl.value;
+        });
+    };
 });
